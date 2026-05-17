@@ -118,7 +118,24 @@ public class ClientHandler implements Runnable {
                     auctionData.put("category", category);
 
                     auctionData.put("description", auction.getItem().getDescription());
+                    auctionData.put("startTime", auction.getStartTime().toString());
                     auctionData.put("endTime", auction.getEndTime().toString());
+                    
+                    if (auction.getHighestBidderId() != null) {
+                        auctionData.put("highestBidderId", auction.getHighestBidderId());
+                    }
+                    
+                    // Thêm dữ liệu lịch sử đặt giá vào gói tin
+                    List<Map<String, Object>> historyData = new ArrayList<>();
+                    for (BidTransaction bid : auction.getBidHistory()) {
+                        Map<String, Object> bidMap = new HashMap<>();
+                        bidMap.put("bidderId", bid.getBidderId());
+                        bidMap.put("amount", bid.getAmount());
+                        bidMap.put("timestamp", bid.getTimestamp().toString());
+                        historyData.add(bidMap);
+                    }
+                    auctionData.put("bidHistory", historyData);
+
                     auctionDataList.add(auctionData);
                 }
 
@@ -199,6 +216,7 @@ public class ClientHandler implements Runnable {
                 broadcastRes.addData("startPrice", startPrice);
                 broadcastRes.addData("category", category);
                 broadcastRes.addData("description", description);
+                broadcastRes.addData("startTime", startTime.toString());
                 broadcastRes.addData("endTime", endTimeStr);
                 
                 AuctionServer.broadcast(broadcastRes);

@@ -1,6 +1,7 @@
 package com.auction.network;
 
 import com.auction.model.auction.Auction;
+import com.auction.model.auction.BidTransaction;
 import com.auction.model.item.*;
 import com.auction.model.user.NormalUser;
 import com.auction.model.user.Seller;
@@ -133,6 +134,11 @@ public class ClientManager {
         double startPrice = Double.parseDouble(String.valueOf(payload.get("startPrice")));
         String category = String.valueOf(payload.get("category"));
         String desc = String.valueOf(payload.get("description"));
+        
+        LocalDateTime startT = LocalDateTime.now();
+        if (payload.get("startTime") != null) {
+            startT = LocalDateTime.parse(String.valueOf(payload.get("startTime")));
+        }
         LocalDateTime endT = LocalDateTime.parse(String.valueOf(payload.get("endTime")));
         
         Item localItem;
@@ -144,8 +150,23 @@ public class ClientManager {
         //tạo 1 local đối tượng auction
         NormalUser baseUser = new NormalUser(sellerName, "");
         baseUser.setId(sellerId);
-        Auction localAuction = new Auction(localItem, new Seller(baseUser), startPrice, LocalDateTime.now(), endT);
+        Auction localAuction = new Auction(localItem, new Seller(baseUser), startPrice, startT, endT);
         localAuction.setId(auctionId);
+
+        if (payload.get("highestBidderId") != null) {
+            localAuction.setHighestBidderId(String.valueOf(payload.get("highestBidderId")));
+        }
+
+        // Phục hồi lịch sử đấu giá từ Server về Client
+        if (payload.get("bidHistory") != null) {
+            List<Map<String, Object>> historyList = (List<Map<String, Object>>) payload.get("bidHistory");
+            for (Map<String, Object> bidMap : historyList) {
+                String bId = String.valueOf(bidMap.get("bidderId"));
+                double amt = Double.parseDouble(String.valueOf(bidMap.get("amount")));
+                LocalDateTime ts = LocalDateTime.parse(String.valueOf(bidMap.get("timestamp")));
+                localAuction.addBidToHistory(new BidTransaction(auctionId, bId, amt, ts));
+            }
+        }
 
         //nhét vào RAM của Client
         AuctionManager.getINSTANCE().addAuction(localAuction);

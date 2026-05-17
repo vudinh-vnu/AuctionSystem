@@ -43,6 +43,12 @@ public class ItemDetailsController implements AuctionObserver {
     @FXML
     private Label lblDetailDescription;
 
+    @FXML
+    private javafx.scene.control.Button btnPlaceBid; // Gắn fx:id="btnPlaceBid" cho nút "PLACE BID" trong SceneBuilder
+
+    @FXML
+    private Label lblWinner; // Tạo 1 Label mới trong SceneBuilder và gắn fx:id="lblWinner" để hiện tên người thắng
+
     private Auction auction;
 
     @FXML
@@ -85,7 +91,6 @@ public class ItemDetailsController implements AuctionObserver {
 
         lblDetailTitle.setText(auction.getItem().getName());
         txtUID.setText(auction.getId());
-        lblDetailCondition.setText(auction.getStatus().name());
         
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         lblTimestart.setText(auction.getStartTime().format(timeFormatter));
@@ -94,6 +99,48 @@ public class ItemDetailsController implements AuctionObserver {
         
         //Cập nhật giá dựa theo giá bid lớn nhất hiện tại
         lblDetailPrice.setText(String.format("%.2f VND", auction.getHighestBid()));
+
+        // Thay đổi giao diện tùy thuộc vào trạng thái phiên đấu giá
+        if (auction.getStatus() == AuctionStatus.FINISHED) {
+            lblDetailCondition.setText("ĐÃ KẾT THÚC");
+            lblDetailCondition.setStyle("-fx-background-color: #8B0000; -fx-text-fill: white; -fx-padding: 3px 8px; -fx-background-radius: 5px;");
+            
+            txtBidInput.setDisable(true);
+            if (btnPlaceBid != null) btnPlaceBid.setDisable(true);
+            
+            if (auction.getHighestBidderId() != null && !auction.getHighestBidderId().isEmpty()) {
+                lblDetailPrice.setStyle("-fx-background-color: #d4edda; -fx-text-fill: #155724; -fx-padding: 3px 8px;"); // Nền xanh lá nhạt
+                if (lblWinner != null) {
+                    lblWinner.setText("Winner: " + auction.getHighestBidderId());
+                    lblWinner.setVisible(true);
+                } else {
+                    lblDetailTitle.setText(auction.getItem().getName() + " - Winner: " + auction.getHighestBidderId());
+                }
+            } else {
+                if (lblWinner != null) {
+                    lblWinner.setText("Phiên đấu giá thất bại (Không có người mua)");
+                    lblWinner.setVisible(true);
+                } else {
+                    lblDetailTitle.setText(auction.getItem().getName() + " - Thất bại");
+                }
+            }
+        } else { // Trạng thái OPEN hoặc RUNNING
+            lblDetailCondition.setText(auction.getStatus().name());
+            lblDetailCondition.setStyle(""); // Đặt lại style mặc định
+            
+            // Kiểm tra nếu user hiện tại là người tạo phiên đấu giá thì vô hiệu hóa nút đặt giá
+            if (auction.getSeller().getId().equals(ClientManager.getINSTANCE().getUserId())) {
+                txtBidInput.setDisable(true);
+                txtBidInput.setPromptText("Sản phẩm của bạn");
+                if (btnPlaceBid != null) btnPlaceBid.setDisable(true);
+            } else {
+                txtBidInput.setDisable(false);
+                txtBidInput.setPromptText("Enter amount...");
+                if (btnPlaceBid != null) btnPlaceBid.setDisable(false);
+            }
+            lblDetailPrice.setStyle("");
+            if (lblWinner != null) lblWinner.setVisible(false);
+        }
     }
 
     @FXML

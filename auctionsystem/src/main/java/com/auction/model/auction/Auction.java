@@ -94,6 +94,11 @@ public class Auction extends Entity {
         if (user == null) {
             throw new IllegalArgumentException("Không tìm thấy người dùng với ID: " + bidderId);
         }
+
+        // Ngăn chặn người tạo phiên tự đặt giá cho sản phẩm của mình (Shill bidding)
+        if (this.seller.getId().equals(bidderId)) {
+            throw new InvalidBidException("Bạn không thể tự đặt giá cho phiên đấu giá do chính mình tạo ra!");
+        }
         // if (user.getBalance() < amount) {
         //     throw new InvalidBidException("Số dư không đủ! (Yêu cầu: " + amount + ", Hiện có: " + user.getBalance() + ")");
         // }
