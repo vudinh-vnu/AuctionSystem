@@ -1,14 +1,15 @@
 package com.auction.network;
 
 import com.auction.model.auction.Auction;
+import com.auction.model.auction.BidTransaction;
 import com.auction.model.item.*;
+import com.auction.model.auction.AuctionStatus;
 import com.auction.model.user.NormalUser;
 import com.auction.model.user.Seller;
 import com.auction.service.AuctionManager;
 import com.auction.network.message.Request;
 import com.auction.network.message.Response;
 import com.google.gson.Gson;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,6 +31,7 @@ public class ClientManager {
 
     private String userId;
     private String userName;
+    private double totalBalance;
 
     private ClientManager(){}
     public static ClientManager getINSTANCE(){
@@ -73,11 +75,31 @@ public class ClientManager {
                         // Phân loại: Xử lý ngầm các lệnh Broadcast từ Server
                         if ("NEW_AUCTION_BROADCAST".equals(response.getCommand())) { // PUSH
                             addLocalAuction(response.getPayload());
-                            System.out.println("Đã đồng bộ phiên đấu giá mới vào RAM Client thành công!");
+                            System.out.println("___thêm phiên đấu giá mới vào local___");
+                        }
+                        else if ("NEW_BID_BROADCAST".equals(response.getCommand())) { // PUSH: Nhận lượt bid mới
+                            String auctionId = String.valueOf(response.getPayload().get("auctionId"));
+                            String bidderId = String.valueOf(response.getPayload().get("bidderId"));
+                            double amount = Double.parseDouble(String.valueOf(response.getPayload().get("amount")));
+                            
+                            Auction localAuction = AuctionManager.getINSTANCE().getAuction(auctionId);
+                            // Cập nhật từ Broadcast cho tất cả các Client (kể cả client vừa gửi)
+                            if (localAuction != null) {
+                                localAuction.syncBid(bidderId, amount);
+                                AuctionManager.getINSTANCE().notifyAuctionChanged(); // Bấm chuông báo thay đổi
+                            }
+                        } else if ("STATUS_UPDATE_BROADCAST".equals(response.getCommand())) { // PUSH: Nhận cập nhật trạng thái
+                            String auctionId = String.valueOf(response.getPayload().get("auctionId"));
+                            String newStatusStr = String.valueOf(response.getPayload().get("newStatus"));
+                            
+                            Auction localAuction = AuctionManager.getINSTANCE().getAuction(auctionId);
+                            if (localAuction != null) {
+                                localAuction.syncStatus(AuctionStatus.valueOf(newStatusStr));
+                                AuctionManager.getINSTANCE().notifyAuctionChanged(); // Bấm chuông báo thay đổi
+                            }
                         } else if ("GET_ALL_AUCTIONS_RES".equals(response.getCommand())) { // PULL
                             // Xóa dữ liệu cũ trước khi nạp dữ liệu thật
                             AuctionManager.getINSTANCE().clearAuctions();
-
                             // Dữ liệu trả về là một List các Map
                             List<Map<String, Object>> auctionDataList = (List<Map<String, Object>>) response.getPayload().get("auctions");
                             
@@ -116,14 +138,19 @@ public class ClientManager {
      * Dùng chung cho cả PUSH (broadcast) và PULL (get all).
      */
     private void addLocalAuction(Map<String, Object> payload) {
-        String aucId = String.valueOf(payload.get("auctionId"));
-        String itmId = String.valueOf(payload.get("itemId"));
+        String auctionId = String.valueOf(payload.get("auctionId"));
+        String itemId = String.valueOf(payload.get("itemId"));
         String sellerId = String.valueOf(payload.get("sellerId"));
         String sellerName = String.valueOf(payload.get("sellerName"));
         String name = String.valueOf(payload.get("name"));
         double startPrice = Double.parseDouble(String.valueOf(payload.get("startPrice")));
         String category = String.valueOf(payload.get("category"));
         String desc = String.valueOf(payload.get("description"));
+        
+        LocalDateTime startT = LocalDateTime.now();
+        if (payload.get("startTime") != null) {
+            startT = LocalDateTime.parse(String.valueOf(payload.get("startTime")));
+        }
         LocalDateTime endT = LocalDateTime.parse(String.valueOf(payload.get("endTime")));
         
         Item localItem;
@@ -131,14 +158,33 @@ public class ClientManager {
         else if ("Electronics".equals(category)) localItem = new Electronics(name, desc);
         else if ("Vehicle".equals(category)) localItem = new Vehicle(name, desc);
         else throw new IllegalArgumentException("Danh mục không hợp lệ: " + category);
-        localItem.setId(itmId);
-
+        localItem.setId(itemId);
+        //tạo 1 local đối tượng auction
         NormalUser baseUser = new NormalUser(sellerName, "");
         baseUser.setId(sellerId);
-        Auction localAuction = new Auction(localItem, new Seller(baseUser), startPrice, LocalDateTime.now(), endT);
-        localAuction.setId(aucId);
+        Auction localAuction = new Auction(localItem, new Seller(baseUser), startPrice, startT, endT);
+        localAuction.setId(auctionId);
 
-        // Nhét vào RAM của Client
+        if (payload.get("status") != null) {
+            localAuction.setStatus(AuctionStatus.valueOf(String.valueOf(payload.get("status"))));
+        }
+
+        if (payload.get("highestBidderId") != null) {
+            localAuction.setHighestBidderId(String.valueOf(payload.get("highestBidderId")));
+        }
+
+        // Phục hồi lịch sử đấu giá từ Server về Client
+        if (payload.get("bidHistory") != null) {
+            List<Map<String, Object>> historyList = (List<Map<String, Object>>) payload.get("bidHistory");
+            for (Map<String, Object> bidMap : historyList) {
+                String bId = String.valueOf(bidMap.get("bidderId"));
+                double amt = Double.parseDouble(String.valueOf(bidMap.get("amount")));
+                LocalDateTime ts = LocalDateTime.parse(String.valueOf(bidMap.get("timestamp")));
+                localAuction.addBidToHistory(new BidTransaction(auctionId, bId, amt, ts));
+            }
+        }
+
+        //nhét vào RAM của Client
         AuctionManager.getINSTANCE().addAuction(localAuction);
     }
 
@@ -161,14 +207,20 @@ public class ClientManager {
     public String getUserName() {
         return userName;
     }
-
-    public void setUser(String userId, String userName) {
+    // lưu trữ thông tin cho user sử dụng client này
+    public void setUser(String userId, String userName, double balance) {
         this.userId = userId;
         this.userName = userName;
+        this.totalBalance = balance;
+    }
+
+    public double getTotalBalance() {
+        return totalBalance;
     }
 
     public void clearUser() {
         this.userId = null;
         this.userName = null;
+        this.totalBalance = 0;
     }
 }

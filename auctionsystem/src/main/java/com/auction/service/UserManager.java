@@ -1,17 +1,14 @@
+
 package com.auction.service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 //quản lý các logic liên quan đến người dùng
-
+import com.auction.util.PersistenceService;
 import com.auction.model.user.*;
 public class UserManager {
     private Map<String,NormalUser> users = new ConcurrentHashMap<>();
     private static volatile UserManager INSTANCE;
-    private UserManager(){
-        // Dữ liệu mồi (Seed data) để test chức năng Đăng nhập
-        NormalUser adminUser = new NormalUser("admin", "123");
-        users.put("admin", adminUser);
-    }
+    private UserManager(){}
     public static UserManager getINSTANCE(){
         if (INSTANCE==null){
             synchronized(UserManager.class){
@@ -27,6 +24,7 @@ public class UserManager {
     //chỉ tập trung xử lý logic nghiệp vụ lõi (chống trùng lặp dữ liệu)
     public NormalUser register(String username, String password) throws IllegalArgumentException {
         NormalUser newUser = new NormalUser(username, password);
+        newUser.setBalance(10000);
         // putIfAbsent(ConcurrentHashMap) :Trả về null nếu chưa có ai lấy tên này, trả về user cũ nếu đã tồn tại
         NormalUser existingUser = users.putIfAbsent(username, newUser);
         //kiểm tra nhiều luồng cùng lúc register cùng tên đăng nhập
@@ -70,5 +68,21 @@ public class UserManager {
     public Admin getAdminRole(NormalUser user) {
         if (user == null) throw new IllegalArgumentException("User không được để trống");
         return new Admin(user);
+    }
+
+
+    public void addBalance(String userId, double amount) {
+        NormalUser user = getUserById(userId);
+        if (user != null) {
+            user.setBalance(user.getBalance() + amount);
+            PersistenceService.saveUser(user);
+        }
+    }
+
+    /**
+     * Trả về danh sách tất cả người dùng (Dùng để kiểm tra/debug)
+     */
+    public Map<String, NormalUser> getAllUsers() {
+        return users;
     }
 }

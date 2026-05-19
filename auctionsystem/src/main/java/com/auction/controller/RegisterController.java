@@ -33,7 +33,8 @@ public class RegisterController {
                     if ("SUCCESS".equals(response.getStatus())) {
                         String serverUserId = (String) response.getPayload().get("userId");
                         String serverUsername = txtUsername.getText();
-                        ClientManager.getINSTANCE().setUser(serverUserId, serverUsername);
+                        double balance = 10000;
+                        ClientManager.getINSTANCE().setUser(serverUserId, serverUsername, balance);
 
                         //Gửi yêu cầu PULL dữ liệu trước khi responseSucces
                         Request pullRequest = new Request("GET_ALL_AUCTIONS");
@@ -52,6 +53,7 @@ public class RegisterController {
             request.addData("username", txtUsername.getText());
             request.addData("password", txtPassword.getText());
             ClientManager.getINSTANCE().sendRequest(request);
+           
         }
     }
     

@@ -3,6 +3,8 @@ package com.auction.model.auction;
 import com.auction.model.common.Entity;
 import com.auction.model.item.Item;
 import com.auction.model.user.Seller;
+import com.auction.model.user.NormalUser;
+import com.auction.service.UserManager;
 import java.time.LocalDateTime;
 import com.auction.exception.AuctionClosedException;
 import com.auction.exception.InvalidBidException;
@@ -24,7 +26,6 @@ public class Auction extends Entity {
     private AuctionStatus status;
     
     public Auction(Item item, Seller seller, double startBid, LocalDateTime startTime, LocalDateTime endTime) {
-        //super();  bỏ super
         this.item = item;
         this.seller = seller;
         this.highestBidderId = null;
@@ -59,8 +60,9 @@ public class Auction extends Entity {
  */
     private void updateAuctionStatus() {
         // Không thay đổi trạng thái nếu đã ở trạng thái cuối cùng
-        if (this.status == AuctionStatus.CANCELED || 
-            this.status == AuctionStatus.FINISHED) {
+        if (this.status == AuctionStatus.CANCELED ||
+            this.status == AuctionStatus.FINISHED || 
+            this.status == AuctionStatus.PAID) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
@@ -84,19 +86,54 @@ public class Auction extends Entity {
  */
     public synchronized boolean processBid(String bidderId, double amount) {
         updateAuctionStatus(); // Đảm bảo trạng thái hiện tại trước khi xử lý bid
-
+    
         if (this.status != AuctionStatus.RUNNING) {
             throw new AuctionClosedException("Chỉ có thể đặt giá khi phiên đấu giá đang RUNNING | Current status: " + this.status);
+        }
+        // Kiểm tra số dư người dùng trước khi chấp nhận giá thầu
+        NormalUser user = UserManager.getINSTANCE().getUserById(bidderId);
+        if (user == null) {
+            throw new IllegalArgumentException("Không tìm thấy người dùng với ID: " + bidderId);
+        }
+        // Ngăn chặn người tạo phiên tự đặt giá cho sản phẩm của mình (Shill bidding)
+        if (this.seller.getId().equals(bidderId)) {
+            throw new InvalidBidException("Bạn không thể tự đặt giá cho phiên đấu giá do chính mình tạo ra!");
+        }
+        if (user.getBalance() < amount) {
+            throw new InvalidBidException("Số dư không đủ! (Yêu cầu: " + amount + ", Hiện có: " + user.getBalance() + ")");
         }
         if (amount <= this.highestBid) {
             throw new InvalidBidException("Bid amount (" + amount + ") must be higher than current highest bid (" + this.highestBid + ").");
         }
+        //logic frozen balance
+        //trả lại tiền cho người đặt giá cao nhất trước đó nếu có
+        if (highestBidderId != null){
+            UserManager.getINSTANCE().addBalance(highestBidderId, highestBid);
+        }
+        //trừ tiền của người đặt giá cao nhất hiện tại
+        UserManager.getINSTANCE().addBalance(bidderId, -amount);
+        syncBid(bidderId, amount); // Thông báo cho các observer về thay đổi
+        return true;
+    }
+
+    /**
+     * Đồng bộ dữ liệu giá thầu từ Server về Client (Bỏ qua các bước kiểm tra logic của Server).
+     * Hàm này được dùng khi Client nhận được tín hiệu Broadcast giá mới.
+     */
+    public synchronized void syncBid(String bidderId, double amount) {
         this.highestBid = amount;
         this.highestBidderId = bidderId;
         BidTransaction newBid = new BidTransaction(this.getId(), bidderId, amount, LocalDateTime.now());
         this.addBidToHistory(newBid);
-        notifyObservers(); // Thông báo cho các observer về thay đổi
-        return true;
+        notifyObservers();
+    }
+
+    /**
+     * Đồng bộ trạng thái từ Server về Client.
+     */
+    public synchronized void syncStatus(AuctionStatus newStatus) {
+        this.status = newStatus;
+        notifyObservers();
     }
 
     public void addBidToHistory(BidTransaction transaction) {
@@ -138,8 +175,47 @@ public class Auction extends Entity {
         if (this.status != AuctionStatus.RUNNING && this.status != AuctionStatus.OPEN) {
             return false; // Chỉ có thể hủy khi đang OPEN hoặc RUNNING
         }
+        //hoàn lại tiền đã đóng băng cho người giữ giá cao nhất hiện tại nếu có
+        if (this.highestBidderId != null) {
+            UserManager.getINSTANCE().addBalance(this.highestBidderId, this.highestBid);
+        }
         this.status = AuctionStatus.CANCELED;
         notifyObservers(); // Thông báo cho các observer
         return true;
+    }
+
+    /**
+     * Chuyển tiền cho Seller
+     * Trạng thái từ FINISHED -> PAID
+     */
+    public synchronized void finalizeAuction() {
+        updateAuctionStatus();
+        if (this.status == AuctionStatus.FINISHED) {
+            // Nếu có người thắng, chuyển tiền đóng băng cho Seller
+            if (this.highestBidderId != null) {
+                UserManager.getINSTANCE().addBalance(this.seller.getId(), this.highestBid);
+            }
+            this.status = AuctionStatus.PAID;
+            notifyObservers();
+        }
+    }
+
+    /**
+     * Hàm dành cho luồng ngầm để chủ động giám sát và chuyển đổi trạng thái (Real-time)
+     */
+    public synchronized void monitorState() {
+        AuctionStatus oldStatus = this.status;
+        updateAuctionStatus();
+
+        // Nếu có sự chuyển đổi trạng thái (VD: OPEN -> RUNNING), lập tức báo cho Client
+        if (oldStatus != this.status) {
+            notifyObservers(); 
+        }
+        // Đợi 5 phút sau khi kết thúc (FINISHED) mới tiến hành kết toán và chuyển sang PAID
+        if (this.status == AuctionStatus.FINISHED) {
+            if (LocalDateTime.now().isAfter(this.endTime.plusMinutes(5))) {
+                finalizeAuction();
+            }
+        }
     }
 }
