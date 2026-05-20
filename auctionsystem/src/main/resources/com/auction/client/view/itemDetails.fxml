@@ -11,6 +11,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
+
 <VBox prefHeight="700.0" prefWidth="900.0" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.auction.controller.ItemDetailsController">
     <children>
         <HBox alignment="CENTER_LEFT" prefHeight="50.0" styleClass="header-bar">
@@ -39,9 +40,17 @@
 
                 <VBox spacing="15.0" HBox.hgrow="ALWAYS">
                     <children>
-                        <Label fx:id="lblDetailTitle" text="Item" textFill="#0c4b8e">
-                            <font><Font name="System Bold" size="28.0" /></font>
-                        </Label>
+                  <HBox prefHeight="24.0" prefWidth="400.0">
+                     <children>
+                              <Label fx:id="lblDetailTitle" prefHeight="40.0" prefWidth="256.0" text="Item" textFill="#0c4b8e">
+                                  <font>
+                              <Font name="System Bold" size="28.0" />
+                           </font>
+                              </Label>
+                        <Region prefHeight="40.0" prefWidth="20.0" />
+                        <Button fx:id="btnCancelAuction" mnemonicParsing="false" onAction="#handleCancelAuction" styleClass="custom-button" text="❌ Cancel" />
+                     </children>
+                  </HBox>
 
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                             <children>
@@ -95,7 +104,7 @@
                                 <Label text="Đặt bid của bạn :" />
                                 <HBox spacing="10.0">
                                     <children>                                        
-                                        <TextField fx:id="txtBidInput" prefHeight="40.0" prefWidth="200.0" styleClass="input-harmonious" promptText="Enter amount..." />
+                                        <TextField fx:id="txtBidInput" prefHeight="60.0" prefWidth="200.0" promptText="Enter amount..." styleClass="input-harmonious" />
                                         <Button fx:id="btnPlaceBid" onAction="#handlePlaceBid" prefHeight="40.0" prefWidth="150.0" styleClass="custom-button" text="PLACE BID">
                                             <font><Font name="System Bold" size="14.0" /></font>
                                         </Button>
@@ -104,7 +113,7 @@
                             </children>
                         </VBox>
 
-                        <VBox spacing="5.0">
+                        <VBox prefHeight="141.0" prefWidth="400.0" spacing="5.0">
                             <children>
                                 <Label text="Description:">
                                     <font><Font name="System Bold" size="14.0" /></font>
