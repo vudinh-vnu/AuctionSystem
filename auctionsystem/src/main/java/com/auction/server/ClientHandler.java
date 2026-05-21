@@ -134,6 +134,7 @@ public class ClientHandler implements Runnable {
                     for (BidTransaction bid : auction.getBidHistory()) {
                         Map<String, Object> bidMap = new HashMap<>();
                         bidMap.put("bidderId", bid.getBidderId());
+                        bidMap.put("bidderName", bid.getBidderName());
                         bidMap.put("amount", bid.getAmount());
                         bidMap.put("timestamp", bid.getTimestamp().toString());
                         historyData.add(bidMap);
@@ -154,6 +155,7 @@ public class ClientHandler implements Runnable {
                 AuctionManager.getINSTANCE().placeBid(auctionId, bidderId, amount);
                 Auction auction = AuctionManager.getINSTANCE().getAuction(auctionId);
                 NormalUser bidder = UserManager.getINSTANCE().getUserById(bidderId);
+                String bidderName = bidder.getName();
 
                 response.setStatus("SUCCESS");
                 response.setMessage("Đặt giá thành công!");
@@ -174,6 +176,7 @@ public class ClientHandler implements Runnable {
                 broadcastRes.setStatus("SUCCESS");
                 broadcastRes.addData("auctionId", auctionId);
                 broadcastRes.addData("bidderId", bidderId);
+                broadcastRes.addData("bidderName", bidderName);
                 broadcastRes.addData("amount", amount);
                 AuctionServer.broadcast(broadcastRes);
             } else if ("CREATE_AUCTION".equals(command)) {
