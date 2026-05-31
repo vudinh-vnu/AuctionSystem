@@ -1,10 +1,8 @@
 package com.auction.server;
 
 import com.auction.model.auction.Auction;
-import com.auction.model.user.NormalUser;
 import com.auction.model.auction.AuctionStatus;
 import com.auction.service.AuctionManager;
-import com.auction.service.UserManager;
 import com.auction.util.PersistenceService;
 
 import java.io.IOException;

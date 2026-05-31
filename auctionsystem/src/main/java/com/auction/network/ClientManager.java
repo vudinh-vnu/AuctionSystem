@@ -102,7 +102,9 @@ public class ClientManager {
                             // Xóa dữ liệu cũ trước khi nạp dữ liệu thật
                             AuctionManager.getINSTANCE().clearAuctions();
                             // Dữ liệu trả về là một List các Map
-                            List<Map<String, Object>> auctionDataList = (List<Map<String, Object>>) response.getPayload().get("auctions");
+                            @SuppressWarnings("unchecked")
+                            List<Map<String, Object>> auctionDataList = 
+                                (List<Map<String, Object>>) response.getPayload().get("auctions");
                             
                             if (auctionDataList != null) {
                                 for (Map<String, Object> auctionData : auctionDataList) {
@@ -180,6 +182,7 @@ public class ClientManager {
 
         // Phục hồi lịch sử đấu giá từ Server về Client
         if (payload.get("bidHistory") != null) {
+            @SuppressWarnings("unchecked")
             List<Map<String, Object>> historyList = (List<Map<String, Object>>) payload.get("bidHistory");
             for (Map<String, Object> bidMap : historyList) {
                 String bId = String.valueOf(bidMap.get("bidderId"));

@@ -153,9 +153,15 @@ public class ItemDetailsController implements AuctionObserver {
             priceCol.getStyleClass().add("price-column");
             priceCol.setStyle("-fx-alignment: CENTER");
 
-            tvBidHistory.getColumns().addAll(seqCol, timeCol, bidderCol, priceCol);
+            tvBidHistory.getColumns().add(seqCol);
+            tvBidHistory.getColumns().add(timeCol);
+            tvBidHistory.getColumns().add(bidderCol);
+            tvBidHistory.getColumns().add(priceCol);
+            
             tvBidHistory.setItems(bidLogItems);
-            tvBidHistory.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            
+            // Thay thế hằng số đã deprecated
+            tvBidHistory.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         }
 
         // Khởi tạo series cho biểu đồ

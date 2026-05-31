@@ -336,7 +336,8 @@ public class PersistenceService {
         Field field = manager.getClass().getDeclaredField(fieldName); // khởi tạo đối tượng Field đại diện cho thuộc
                                                                       // tính fieldName
         field.setAccessible(true);// làm cho có thể truy cập thuộc tính private
-        Map targetMap = (Map) field.get(manager);
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> targetMap = (Map<Object, Object>) field.get(manager);
         targetMap.clear();
         targetMap.putAll(data);// bỏ toàn bộ map từ DB vào các thuộc tính cần thiết của manager
     }

@@ -3,56 +3,118 @@ package com.auction.network.message;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Response {
+/** Response. */
+public final class Response {
+    /** Command. */
     private String command;
-    private String status; //"SUCCESS" hoặc "ERROR"
+    /** Status. */
+    private String status;
+    /** Message. */
     private String message;
+    /** Payload. */
     private Map<String, Object> payload;
 
+    /** Constructor. */
     public Response() {
         this.payload = new HashMap<>();
     }
 
-    public Response(String command, String status, String message) {
-        this.command = command;
-        this.status = status;
-        this.message = message;
+    /**
+     * Constructor.
+     *
+     * @param resCommand command
+     * @param resStatus status
+     * @param resMessage message
+     */
+    public Response(
+            final String resCommand,
+            final String resStatus,
+            final String resMessage) {
+        this.command = resCommand;
+        this.status = resStatus;
+        this.message = resMessage;
         this.payload = new HashMap<>();
     }
 
-    public void addData(String key, Object value) {
+    /**
+     * Thêm data.
+     *
+     * @param key key
+     * @param value value
+     */
+    public void addData(final String key, final Object value) {
         this.payload.put(key, value);
     }
 
+    /**
+     * Get command.
+     *
+     * @return command
+     */
     public String getCommand() {
         return command;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    /**
+     * Set command.
+     *
+     * @param resCommand command
+     */
+    public void setCommand(final String resCommand) {
+        this.command = resCommand;
     }
 
+    /**
+     * Get status.
+     *
+     * @return status
+     */
     public String getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    /**
+     * Set status.
+     *
+     * @param resStatus status
+     */
+    public void setStatus(final String resStatus) {
+        this.status = resStatus;
     }
 
+    /**
+     * Get message.
+     *
+     * @return message
+     */
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    /**
+     * Set message.
+     *
+     * @param resMessage message
+     */
+    public void setMessage(final String resMessage) {
+        this.message = resMessage;
     }
 
+    /**
+     * Get payload.
+     *
+     * @return payload
+     */
     public Map<String, Object> getPayload() {
         return payload;
     }
 
-    public void setPayload(Map<String, Object> payload) {
-        this.payload = payload;
+    /**
+     * Set payload.
+     *
+     * @param resPayload payload
+     */
+    public void setPayload(final Map<String, Object> resPayload) {
+        this.payload = resPayload;
     }
 }

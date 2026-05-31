@@ -1,7 +1,6 @@
 package com.auction.controller;
 //sửa cũng được
 import com.auction.model.auction.Auction;
-import com.auction.model.item.Item;
 import com.auction.service.AuctionManager;
 import com.auction.network.ClientManager;
 import javafx.event.ActionEvent;
@@ -19,7 +18,6 @@ import javafx.stage.StageStyle;
 import javafx.application.Platform;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javafx.scene.control.ComboBox;
