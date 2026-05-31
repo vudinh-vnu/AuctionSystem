@@ -21,7 +21,7 @@ public class AppClient extends Application {
 
         primaryStage.setTitle("Auction System");
         primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
+        primaryStage.setResizable(true);
         primaryStage.show();
     }
 
