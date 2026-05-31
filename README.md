@@ -114,6 +114,43 @@ cd AuctionSystem/auctionsystem
 mvn javafx:run
 ```
 
+## 6. Danh sách các chức năng đã hoàn thành
+### 6.1. Nhóm chức năng nâng cao
+- **Trực quan hóa dữ liệu:** Vẽ biểu đồ Line Chart theo dõi biến động giá và các mốc ngày.
+- **Cơ chế đóng băng tài khoản (Frozen Balance):** Tạm giữ và hoàn trả số dư để đảm bảo khả năng thanh toán.
+- **Chống đấu giá phút cuối (Anti-sniping):** Tự động gia hạn thời gian kết thúc khi có lượt bid mới.
+- **Cập nhật thời gian thực (Real-time Updates):** Đồng bộ hóa dữ liệu và hiển thị thay đổi ngay lập tức trên giao diện mà không cần tải lại trang.
+
+### 6.2. Nhóm chức năng cơ bản
+- **Đăng ký tài khoản.**
+- **Đăng nhập hệ thống.**
+- **Quản lý số dư tài khoản (Nạp/Trừ tiền).**
+- **Phân quyền người dùng (Bidder, Seller, Admin).**
+- **Tìm kiếm người dùng theo ID.**
+- **Tạo phiên đấu giá mới.**
+- **Hủy phiên đấu giá.**
+- **Quyết toán đấu giá (Chuyển tiền cho người bán).**
+- **Giám sát trạng thái phiên tự động (Open, Running, Finished, Paid, Canceled).**
+- **Hiển thị và phân loại danh mục sản phẩm (Art, Electronics, Vehicle).**
+- **Đặt giá thầu thủ công.**
+- **Đặt giá thầu nhanh (+5, +10, +50 USD).**
+- **Kiểm tra tính hợp lệ của giá thầu và số dư khả dụng.**
+- **Chống đấu giá ảo (Ngăn người bán tự đặt giá).**
+- **Lưu trữ và hiển thị lịch sử đặt giá chi tiết.**
+- **Giao tiếp qua Socket Server/Client.**
+- **Phát thông báo Broadcast (Thông tin giá mới, trạng thái mới).**
+- **Nạp dữ liệu từ PostgreSQL khi khởi động.**
+- **Lưu trữ và cập nhật thực thể.**
+- **Lưu dữ liệu định kỳ xuống Database.**
+- **Dọn dẹp Database phục vụ kiểm thử.**
+- **Tự động kết nối lại Database khi gặp sự cố.**
+- **Thiết kế giao diện người dùng JavaFX.**
+- **Thông báo bằng âm thanh hệ thống.**
+
+## 7. Link báo cáo PDF và Video Demo
+- **Báo cáo Bài tập lớn (PDF):** [Link tải báo cáo tại đây](https://docs.google.com/document/d/1iULcfl7N3TXtoBKnOJFQPiXQNGtAJo9m/edit?usp=sharing&rtpof=true&sd=true)
+- **Video Demo hệ thống:** [Link xem video tại đây](#)
+
 ## 🛠️ Hướng Dẫn Tải & Cấu Hình Môi Trường (Setup Prerequisites)
 
 Nếu máy tính của bạn chưa cài đặt các công cụ cần thiết, hãy thực hiện nhanh theo hướng dẫn sau:
